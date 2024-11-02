@@ -5,7 +5,6 @@ import (
     "fmt"
     "log"
     "sync"
-    "sync/atomic"
     "time"
 )
 
@@ -18,7 +17,7 @@ func Generator(ctx context.Context, ch chan<- int64, fn func(int64)) {
             return
         case ch <- i:
             fn(i)
-            i = i + 1
+            i = i + 1 // N(i) = N(i-1) + 1
         }
     }
 }
@@ -45,8 +44,8 @@ func main() {
     var inputCount int64
 
     go Generator(ctx, chIn, func(i int64) {
-        atomic.AddInt64(&inputSum, i)
-        atomic.AddInt64(&inputCount, 1)
+        inputSum += i
+        inputCount++
     })
 
     const NumOut = 5
@@ -66,7 +65,7 @@ func main() {
         go func(in <-chan int64, i int) {
             defer wg.Done()
             for v := range in {
-                atomic.AddInt64(&amounts[i], 1)
+                amounts[i]++
                 chOut <- v
             }
         }(outs[i], i)
